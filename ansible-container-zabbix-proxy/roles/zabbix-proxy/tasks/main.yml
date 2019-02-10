@@ -1,0 +1,60 @@
+---
+  #when:
+    # - ansible_os_family == "Debian"
+
+- name: install repo zabbix
+  apt:
+    #deb: https://repo.zabbix.com/zabbix/3.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_3.0-2+xenial_all.deb 
+    deb: https://repo.zabbix.com/zabbix/3.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_3.4-1%2Bxenial_all.deb 
+
+- name: Upgrade all packages to last version
+  apt: upgrade=yes update_cache=yes
+
+- name: Install packages
+  apt: name={{ item }} state=latest autoclean=yes autoremove=yes
+  with_items:
+          - snmp
+          - snmp-mibs-downloader
+          - ruby
+          - gem
+          #- zabbix-proxy-pgsql
+          - zabbix-proxy-sqlite3 
+
+- name: create directories 
+  file:
+    path: "{{ item.path }}" 
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+  with_items:
+    - { path: '/usr/lib/zabbix/externalscripts', owner: 'root', group: 'root' }
+    - { path: '/var/run/zabbix/', owner: 'zabbix', group: 'zabbix' }
+    - { path: '/var/lib/sqlite/', owner: 'zabbix', group: 'zabbix' }
+
+- name: "Debian | Download if.speed"
+  get_url:
+    url: https://raw.githubusercontent.com/jjmartres/Zabbix/master/zbx-scripts/if.speed/if.speed
+    dest: /usr/lib/zabbix/externalscripts/if.speed
+    mode: 0711
+
+- name: Modify snmp.conf
+  lineinfile:
+          dest: '/etc/snmp/snmp.conf'
+          regexp: 'mibs :'
+          line: 'mibs +ALL'
+          backrefs: yes
+- name: "Debian | Download MIBS"
+  shell: download-mibs
+- gem:
+    name: snmp
+    state: latest
+
+- name: "Copy dockerentrypoint"
+  template:
+    src: docker-entrypoint.sh 
+    dest: /usr/local/bin/docker-entrypoint.sh 
+    owner: root
+    mode: 0700
+
+- name: delete file install
+  shell: rm -rf /var/lib/apt/lists/* 

@@ -1,0 +1,10 @@
+---
+- name: Install tzdata 
+  apt: name=tzdata state=latest update_cache=yes 
+
+- name: configure timezone Europe/madrid
+  shell: echo "Europe/Madrid" > /etc/timezone
+
+- name: reconfigure timezone
+  command: dpkg-reconfigure -f noninteractive tzdata
+

@@ -1,0 +1,29 @@
+version: "2"
+settings:
+  conductor:
+    base: ubuntu:xenial 
+  project_name: ansible-container-zabbix-proxy
+defaults:
+   DB_SERVER_DBNAME: /var/lib/sqlite/zabbix_proxy_db
+   ZBX_SERVER_HOST: 192.168.0.254
+   ZBX_PROXYOFFLINEBUFFER: 24
+
+services:
+  proxy:
+     from: "phusion/baseimage"
+     ports:
+       - "10051:10051"
+     command: ["docker-entrypoint.sh"]
+     project_name: zbx_pxy_custom
+     roles:
+        - timezone
+        - zabbix-proxy
+     environment:
+        ZBX_SERVER_HOST: 192.168.0.200
+        DB_SERVER_DBNAME: '{{ DB_SERVER_DBNAME }}'
+        ZBX_PROXYOFFLINEBUFFER: '{{ ZBX_PROXYOFFLINEBUFFER }}'
+registries: {}
+  # Add optional registries used for deployment. For example:
+  #  google:
+  #    url: https://gcr.io
+  #    namespace: my-cool-project-xxxxxx   
